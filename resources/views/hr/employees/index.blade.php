@@ -92,6 +92,6 @@
         </tbody>
       </table>
     </div>
-    <div class="table-footer">{{ $employees->links() }}</div>
+    @include('hr.partials.pagination', ['paginator' => $employees])
   </div>
 @endsection

@@ -10,6 +10,7 @@ use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class EmployeeController extends Controller
 {
@@ -46,6 +47,8 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $validated = $this->validatedEmployee($request);
+        $validated['children_nik'] = $this->childrenNikFromRequest($request);
+        unset($validated['children_nik_text']);
         $validated['created_by'] = $request->user()?->id;
         $validated['updated_by'] = $request->user()?->id;
 
@@ -60,14 +63,12 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
-        $employee->load([
-            'division',
-            'position',
-            'documents' => fn ($query) => $query->latest(),
-            'certificates' => fn ($query) => $query->latest(),
-            'attendances' => fn ($query) => $query->latest('attendance_date')->limit(10),
-            'salaries' => fn ($query) => $query->latest()->limit(10),
-        ]);
+        $employee->load(['division', 'position']);
+        $documents = $employee->documents()->latest()->paginate(5, ['*'], 'documents_page')->withQueryString();
+        $internalCertificates = $employee->certificates()->where('certificate_type', 'internal')->latest()->paginate(5, ['*'], 'internal_certificates_page')->withQueryString();
+        $externalCertificates = $employee->certificates()->where('certificate_type', 'external')->latest()->paginate(5, ['*'], 'external_certificates_page')->withQueryString();
+        $attendances = $employee->attendances()->latest('attendance_date')->paginate(5, ['*'], 'attendances_page')->withQueryString();
+        $salaries = $employee->salaries()->latest()->paginate(5, ['*'], 'salaries_page')->withQueryString();
 
         $jobDescriptions = JobDescription::query()
             ->with(['division', 'position', 'directSupervisor'])
@@ -79,7 +80,13 @@ class EmployeeController extends Controller
         return view('hr.employees.show', [
             'employee' => $employee,
             'jobDescriptions' => $jobDescriptions,
+            'documents' => $documents,
+            'internalCertificates' => $internalCertificates,
+            'externalCertificates' => $externalCertificates,
+            'attendances' => $attendances,
+            'salaries' => $salaries,
             'documentTypes' => $this->documentTypes(),
+            'requiredDocuments' => $this->requiredDocuments($employee),
             'certificateTypes' => ['internal', 'external'],
         ]);
     }
@@ -92,6 +99,8 @@ class EmployeeController extends Controller
     public function update(Request $request, Employee $employee)
     {
         $validated = $this->validatedEmployee($request, $employee);
+        $validated['children_nik'] = $this->childrenNikFromRequest($request);
+        unset($validated['children_nik_text']);
         $validated['updated_by'] = $request->user()?->id;
 
         if ($request->hasFile('foto')) {
@@ -131,6 +140,7 @@ class EmployeeController extends Controller
             'statuses' => $this->employeeStatuses(),
             'genders' => ['laki-laki', 'perempuan'],
             'maritalStatuses' => ['belum_menikah', 'menikah', 'cerai'],
+            'childrenNikText' => old('children_nik_text', collect($employee->children_nik ?? [])->implode("\n")),
         ];
     }
 
@@ -146,7 +156,9 @@ class EmployeeController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'jenis_kelamin' => ['nullable', 'in:laki-laki,perempuan'],
             'status_pernikahan' => ['nullable', 'in:belum_menikah,menikah,cerai'],
+            'spouse_nik_ktp' => ['nullable', 'required_if:status_pernikahan,menikah', 'string', 'max:255'],
             'jumlah_anak' => ['nullable', 'integer', 'min:0'],
+            'children_nik_text' => ['nullable', 'string'],
             'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
             'division_id' => ['nullable', 'exists:divisions,id'],
             'position_id' => ['nullable', 'exists:positions,id'],
@@ -165,7 +177,48 @@ class EmployeeController extends Controller
 
     private function documentTypes(): array
     {
-        return ['KTP', 'KK', 'NPWP', 'BPJS', 'Ijazah Terakhir', 'Pengalaman Kerja', 'CV', 'Lainnya'];
+        return ['KTP', 'KTP Istri', 'KTP Anak', 'KK', 'NPWP', 'BPJS Kesehatan', 'BPJS Ketenagakerjaan', 'Ijazah Terakhir', 'Pengalaman Kerja', 'CV', 'Lainnya'];
+    }
+
+    private function requiredDocuments(Employee $employee): array
+    {
+        $requirements = [
+            ['type' => 'KTP', 'label' => 'KTP Karyawan', 'required' => filled($employee->nik_ktp)],
+            ['type' => 'NPWP', 'label' => 'NPWP', 'required' => filled($employee->no_npwp)],
+            ['type' => 'BPJS Kesehatan', 'label' => 'BPJS Kesehatan', 'required' => filled($employee->no_bpjs_kesehatan)],
+            ['type' => 'BPJS Ketenagakerjaan', 'label' => 'BPJS Ketenagakerjaan', 'required' => filled($employee->no_bpjs_ketenagakerjaan)],
+            ['type' => 'KK', 'label' => 'Kartu Keluarga', 'required' => true],
+            ['type' => 'Ijazah Terakhir', 'label' => 'Ijazah Terakhir', 'required' => true],
+            ['type' => 'Pengalaman Kerja', 'label' => 'Surat Pengalaman Kerja', 'required' => true],
+            ['type' => 'KTP Istri', 'label' => 'KTP Istri/Suami', 'required' => $employee->status_pernikahan === 'menikah'],
+        ];
+
+        return collect($requirements)
+            ->filter(fn (array $item) => $item['required'])
+            ->map(function (array $item) use ($employee) {
+                $item['uploaded'] = $employee->documents()->where('document_type', $item['type'])->exists();
+
+                return $item;
+            })
+            ->values()
+            ->all();
+    }
+
+    private function childrenNikFromRequest(Request $request): array
+    {
+        $jumlahAnak = (int) $request->input('jumlah_anak', 0);
+        $childrenNik = collect(preg_split('/\r\n|\r|\n/', (string) $request->input('children_nik_text')))
+            ->map(fn (string $nik) => trim($nik))
+            ->filter()
+            ->values();
+
+        if ($jumlahAnak > 0 && $childrenNik->count() < $jumlahAnak) {
+            throw ValidationException::withMessages([
+                'children_nik_text' => 'NIK anak wajib diisi minimal sesuai jumlah anak.',
+            ]);
+        }
+
+        return $childrenNik->take($jumlahAnak)->all();
     }
 
     private function deleteFile(?string $path): void

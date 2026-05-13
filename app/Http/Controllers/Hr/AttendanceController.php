@@ -21,16 +21,29 @@ class AttendanceController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $monthlyRecap = Attendance::selectRaw('employee_id, status, count(*) as total')
-            ->with('employee')
+        $recapMonth = request('month', now()->month);
+        $recapYear = request('year', now()->year);
+
+        $recapEmployees = Attendance::query()
+            ->select('employee_id')
             ->whereMonth('attendance_date', request('month', now()->month))
             ->whereYear('attendance_date', request('year', now()->year))
+            ->groupBy('employee_id')
+            ->with('employee')
+            ->paginate(10, ['*'], 'recap_page')
+            ->withQueryString();
+
+        $monthlyRecap = Attendance::selectRaw('employee_id, status, count(*) as total')
+            ->whereMonth('attendance_date', $recapMonth)
+            ->whereYear('attendance_date', $recapYear)
+            ->whereIn('employee_id', $recapEmployees->pluck('employee_id'))
             ->groupBy('employee_id', 'status')
             ->get()
             ->groupBy('employee_id');
 
         return view('hr.attendances.index', [
             'attendances' => $attendances,
+            'recapEmployees' => $recapEmployees,
             'monthlyRecap' => $monthlyRecap,
             'employees' => Employee::orderBy('nama')->get(),
             'statuses' => $this->statuses(),

@@ -40,9 +40,10 @@ class RecruitmentRequestController extends Controller
 
     public function show(RecruitmentRequest $recruitment)
     {
-        $recruitment->load(['division', 'position', 'candidates' => fn ($query) => $query->latest()]);
+        $recruitment->load(['division', 'position']);
+        $candidates = $recruitment->candidates()->latest()->paginate(5)->withQueryString();
 
-        return view('hr.recruitments.show', ['recruitment' => $recruitment, 'candidateStatuses' => ['masuk', 'screening', 'interview', 'diterima', 'ditolak']]);
+        return view('hr.recruitments.show', ['recruitment' => $recruitment, 'candidates' => $candidates, 'candidateStatuses' => ['masuk', 'screening', 'interview', 'diterima', 'ditolak']]);
     }
 
     public function edit(RecruitmentRequest $recruitment)

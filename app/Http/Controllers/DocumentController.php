@@ -257,6 +257,8 @@ class DocumentController extends Controller
             ->whereIn('code', array_values(self::TAB_CODES))
             ->orderBy('order_number')
             ->get();
+        $activeCode = self::TAB_CODES[$activeTab] ?? null;
+        $activeCategory = $activeCode ? $categories->firstWhere('code', $activeCode) : null;
 
         $sections = DocumentSection::query()
             ->with(['children' => fn ($query) => $query->orderBy('order_number')])
@@ -265,6 +267,14 @@ class DocumentController extends Controller
             ->orderBy('order_number')
             ->get();
 
+        $sectionRows = DocumentSection::query()
+            ->with(['children' => fn ($query) => $query->orderBy('order_number')])
+            ->where('standard_id', $standard->id)
+            ->whereNull('parent_id')
+            ->orderBy('order_number')
+            ->paginate(10, ['*'], 'sections_page')
+            ->withQueryString();
+
         $documents = Document::query()
             ->with(['category', 'section.parent', 'sections.parent', 'latestRevision', 'revisions'])
             ->where('standard_id', $standard->id)
@@ -272,12 +282,21 @@ class DocumentController extends Controller
             ->orderBy('document_code')
             ->get();
 
+        $activeDocuments = $activeCategory
+            ? Document::query()
+                ->with(['category', 'section.parent', 'sections.parent', 'latestRevision', 'revisions'])
+                ->where('standard_id', $standard->id)
+                ->where('category_id', $activeCategory->id)
+                ->orderBy('document_code')
+                ->paginate(10, ['*'], 'documents_page')
+                ->withQueryString()
+            : null;
+
         $manualMutu = $documents
             ->where('category.code', 'MM')
             ->sortByDesc(fn (Document $document) => $document->latestRevision?->created_at ?? $document->created_at)
             ->first();
 
-        $categoryDocuments = $documents->groupBy('category.code');
         $reviewSections = $this->buildReviewSections($sections, $documents);
         $previousRevision = $selectedDocument?->revisions
             ->where('id', '!=', $selectedDocument->latestRevision?->id)
@@ -286,9 +305,11 @@ class DocumentController extends Controller
 
         return view('dokumen-iso.iso-17025.index', compact(
             'activeTab',
+            'activeCategory',
+            'activeDocuments',
             'categories',
             'sections',
-            'categoryDocuments',
+            'sectionRows',
             'documents',
             'manualMutu',
             'selectedDocument',

@@ -51,11 +51,23 @@
       <div class="card-header-left"><h2 class="card-title">Dokumen / Berkas</h2></div>
       <button class="btn btn-primary btn-sm" type="button" data-open-modal="modal-document"><i class="bi bi-plus-lg"></i> Upload Dokumen</button>
     </div>
+    <div class="modal-body">
+      <h3 class="revision-modal-heading">Checklist Dokumen Wajib</h3>
+      <div class="required-doc-grid">
+        @foreach ($requiredDocuments as $requiredDocument)
+          <div class="required-doc-item @if ($requiredDocument['uploaded']) is-complete @else is-missing @endif">
+            <i class="bi @if ($requiredDocument['uploaded']) bi-check-circle-fill @else bi-exclamation-circle-fill @endif"></i>
+            <span>{{ $requiredDocument['label'] }}</span>
+            <strong>{{ $requiredDocument['uploaded'] ? 'Sudah Upload' : 'Belum Upload' }}</strong>
+          </div>
+        @endforeach
+      </div>
+    </div>
     <div class="table-responsive">
       <table class="data-table">
         <thead><tr><th>Jenis</th><th>Nama</th><th>Expired</th><th>File</th><th class="th-aksi">Aksi</th></tr></thead>
         <tbody>
-          @forelse ($employee->documents as $document)
+          @forelse ($documents as $document)
             <tr>
               <td>{{ $document->document_type }}</td>
               <td>{{ $document->document_name }}<div class="td-email-sub">{{ $document->description }}</div></td>
@@ -69,18 +81,19 @@
         </tbody>
       </table>
     </div>
+    @include('hr.partials.pagination', ['paginator' => $documents])
   </div>
 
   <div class="card">
     <div class="card-header">
-      <div class="card-header-left"><h2 class="card-title">Sertifikat</h2></div>
+      <div class="card-header-left"><h2 class="card-title">Sertifikat Internal</h2></div>
       <button class="btn btn-primary btn-sm" type="button" data-open-modal="modal-certificate"><i class="bi bi-plus-lg"></i> Tambah Sertifikat</button>
     </div>
     <div class="table-responsive">
       <table class="data-table">
         <thead><tr><th>Judul</th><th>Nomor</th><th>Pelaksanaan</th><th>Penerbit</th><th>Tipe</th><th>Masa Berlaku</th><th>File</th><th class="th-aksi">Aksi</th></tr></thead>
         <tbody>
-          @forelse ($employee->certificates as $certificate)
+          @forelse ($internalCertificates as $certificate)
             <tr>
               <td>{{ $certificate->certificate_title }}</td>
               <td>{{ $certificate->certificate_number ?: '-' }}</td>
@@ -92,32 +105,63 @@
               <td><form method="POST" action="{{ route('hr.employee-certificates.destroy', $certificate) }}" data-confirm-delete="Hapus sertifikat {{ $certificate->certificate_title }}?">@csrf @method('DELETE')<button class="btn-action btn-delete"><i class="bi bi-trash3-fill"></i></button></form></td>
             </tr>
           @empty
-            <tr><td colspan="8"><div class="empty-state"><div class="empty-title">Belum ada sertifikat</div></div></td></tr>
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-title">Belum ada sertifikat internal</div></div></td></tr>
           @endforelse
         </tbody>
       </table>
     </div>
+    @include('hr.partials.pagination', ['paginator' => $internalCertificates])
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-left"><h2 class="card-title">Sertifikat External</h2></div>
+    </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Judul</th><th>Nomor</th><th>Pelaksanaan</th><th>Penerbit</th><th>Tipe</th><th>Masa Berlaku</th><th>File</th><th class="th-aksi">Aksi</th></tr></thead>
+        <tbody>
+          @forelse ($externalCertificates as $certificate)
+            <tr>
+              <td>{{ $certificate->certificate_title }}</td>
+              <td>{{ $certificate->certificate_number ?: '-' }}</td>
+              <td>{{ $certificate->execution_date?->format('d M Y') ?? '-' }}</td>
+              <td>{{ $certificate->issuer ?: '-' }}</td>
+              <td><span class="status-badge status-pending">{{ ucfirst($certificate->certificate_type) }}</span></td>
+              <td>{{ $certificate->expired_date?->format('d M Y') ?? '-' }}</td>
+              <td>@if($certificate->file_path)<a href="{{ route('hr.employee-certificates.download', $certificate) }}">Download</a>@else - @endif</td>
+              <td><form method="POST" action="{{ route('hr.employee-certificates.destroy', $certificate) }}" data-confirm-delete="Hapus sertifikat {{ $certificate->certificate_title }}?">@csrf @method('DELETE')<button class="btn-action btn-delete"><i class="bi bi-trash3-fill"></i></button></form></td>
+            </tr>
+          @empty
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-title">Belum ada sertifikat external</div></div></td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+    @include('hr.partials.pagination', ['paginator' => $externalCertificates])
   </div>
 
   <div class="iso-detail-grid">
     <div class="card">
       <div class="card-header"><h2 class="card-title">Absensi Terbaru</h2></div>
       <div class="modal-body">
-        @forelse ($employee->attendances as $attendance)
+        @forelse ($attendances as $attendance)
           <div class="document-empty-row"><i class="bi bi-calendar-check"></i>{{ $attendance->attendance_date?->format('d M Y') }} · {{ ucfirst($attendance->status) }}</div>
         @empty
           <div class="empty-state"><div class="empty-title">Belum ada absensi</div></div>
         @endforelse
+        @include('hr.partials.pagination', ['paginator' => $attendances])
       </div>
     </div>
     <div class="card">
       <div class="card-header"><h2 class="card-title">Riwayat Gaji</h2></div>
       <div class="modal-body">
-        @forelse ($employee->salaries as $salary)
+        @forelse ($salaries as $salary)
           <div class="document-empty-row"><i class="bi bi-cash-stack"></i>{{ $salary->salary_period }} · Rp {{ number_format($salary->total_salary, 0, ',', '.') }}</div>
         @empty
           <div class="empty-state"><div class="empty-title">Belum ada riwayat gaji</div></div>
         @endforelse
+        @include('hr.partials.pagination', ['paginator' => $salaries])
       </div>
     </div>
   </div>
@@ -128,7 +172,21 @@
         <div class="modal-body"><div class="form-grid">
           <div class="form-group"><label class="form-label">Jenis</label><select class="form-select" name="document_type">@foreach($documentTypes as $type)<option value="{{ $type }}">{{ $type }}</option>@endforeach</select></div>
           <div class="form-group"><label class="form-label">Nama Dokumen</label><input class="form-control" name="document_name" required></div>
-          <div class="form-group"><label class="form-label">File</label><input class="form-control" type="file" name="file" required></div>
+          <div class="form-group">
+            <label class="form-label">File</label>
+            <div class="file-upload-wrapper">
+              <input type="file" id="employee-document-file" name="file" class="file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" data-allowed-ext="pdf,jpg,jpeg,png,doc,docx" data-max-size="5" required>
+              <label for="employee-document-file" class="file-label">
+                <div class="file-icon"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+                <div class="file-text">
+                  <span class="file-placeholder" data-default-placeholder="Klik untuk pilih file atau drag &amp; drop">Klik untuk pilih file atau drag &amp; drop</span>
+                  <span class="file-meta">PDF, gambar, Word - Maks. 5MB</span>
+                </div>
+              </label>
+              <div class="file-preview"></div>
+            </div>
+            <div class="invalid-feedback file-error"></div>
+          </div>
           <div class="form-group"><label class="form-label">Expired</label><input class="form-control" type="date" name="expired_date"></div>
           <div class="form-group form-group-full"><label class="form-label">Deskripsi</label><textarea class="form-textarea" name="description"></textarea></div>
         </div></div>
@@ -147,7 +205,21 @@
           <div class="form-group"><label class="form-label">Tanggal Pelaksanaan</label><input class="form-control" type="date" name="execution_date"></div>
           <div class="form-group"><label class="form-label">Expired</label><input class="form-control" type="date" name="expired_date"></div>
           <div class="form-group"><label class="form-label">Tipe</label><select class="form-select" name="certificate_type">@foreach($certificateTypes as $type)<option value="{{ $type }}">{{ ucfirst($type) }}</option>@endforeach</select></div>
-          <div class="form-group"><label class="form-label">File</label><input class="form-control" type="file" name="file"></div>
+          <div class="form-group">
+            <label class="form-label">File</label>
+            <div class="file-upload-wrapper">
+              <input type="file" id="employee-certificate-file" name="file" class="file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" data-allowed-ext="pdf,jpg,jpeg,png,doc,docx" data-max-size="5">
+              <label for="employee-certificate-file" class="file-label">
+                <div class="file-icon"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+                <div class="file-text">
+                  <span class="file-placeholder" data-default-placeholder="Klik untuk pilih file atau drag &amp; drop">Klik untuk pilih file atau drag &amp; drop</span>
+                  <span class="file-meta">PDF, gambar, Word - Maks. 5MB</span>
+                </div>
+              </label>
+              <div class="file-preview"></div>
+            </div>
+            <div class="invalid-feedback file-error"></div>
+          </div>
           <div class="form-group form-group-full"><label class="form-label">Deskripsi</label><textarea class="form-textarea" name="description"></textarea></div>
         </div></div>
         <div class="modal-footer"><button class="btn btn-outline" type="button" data-close-modal="modal-certificate">Batal</button><button class="btn btn-primary">Simpan</button></div>

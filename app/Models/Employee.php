@@ -11,7 +11,7 @@ class Employee extends Model
 {
     protected $fillable = [
         'nama', 'nik_ktp', 'tempat_lahir', 'tanggal_lahir', 'alamat', 'no_hp', 'email',
-        'jenis_kelamin', 'status_pernikahan', 'jumlah_anak', 'foto', 'division_id',
+        'jenis_kelamin', 'status_pernikahan', 'spouse_nik_ktp', 'jumlah_anak', 'children_nik', 'foto', 'division_id',
         'position_id', 'tanggal_masuk', 'status_karyawan', 'no_npwp', 'no_bpjs_kesehatan',
         'no_bpjs_ketenagakerjaan', 'created_by', 'updated_by',
     ];
@@ -22,6 +22,7 @@ class Employee extends Model
             'tanggal_lahir' => 'date',
             'tanggal_masuk' => 'date',
             'jumlah_anak' => 'integer',
+            'children_nik' => 'array',
         ];
     }
 

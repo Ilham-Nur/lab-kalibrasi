@@ -60,16 +60,27 @@
           </div>
           <div class="form-group">
             <label class="form-label">Status Pernikahan</label>
-            <select class="form-select" name="status_pernikahan">
+            <select class="form-select" name="status_pernikahan" id="status_pernikahan">
               <option value="">Pilih</option>
               @foreach ($maritalStatuses as $status)
                 <option value="{{ $status }}" @selected(old('status_pernikahan', $employee->status_pernikahan) === $status)>{{ str_replace('_', ' ', ucfirst($status)) }}</option>
               @endforeach
             </select>
           </div>
+          <div class="form-group" id="spouse_nik_group">
+            <label class="form-label">NIK KTP Istri/Suami</label>
+            <input class="form-control @error('spouse_nik_ktp') is-invalid @enderror" name="spouse_nik_ktp" value="{{ old('spouse_nik_ktp', $employee->spouse_nik_ktp) }}">
+            @error('spouse_nik_ktp') <div class="invalid-feedback">{{ $message }}</div> @enderror
+          </div>
           <div class="form-group">
             <label class="form-label">Jumlah Anak</label>
-            <input class="form-control" type="number" min="0" name="jumlah_anak" value="{{ old('jumlah_anak', $employee->jumlah_anak ?? 0) }}">
+            <input class="form-control" type="number" min="0" name="jumlah_anak" id="jumlah_anak" value="{{ old('jumlah_anak', $employee->jumlah_anak ?? 0) }}">
+          </div>
+          <div class="form-group form-group-full" id="children_nik_group">
+            <label class="form-label">NIK Anak</label>
+            <textarea class="form-textarea @error('children_nik_text') is-invalid @enderror" name="children_nik_text" rows="3" placeholder="Isi satu NIK anak per baris">{{ $childrenNikText }}</textarea>
+            <div class="form-help">Jika jumlah anak lebih dari 0, isi minimal sesuai jumlah anak.</div>
+            @error('children_nik_text') <div class="invalid-feedback">{{ $message }}</div> @enderror
           </div>
           <div class="form-group">
             <label class="form-label">Tanggal Masuk</label>
@@ -131,3 +142,23 @@
     </form>
   </div>
 @endsection
+
+@push('scripts')
+  <script>
+    (function () {
+      function syncFamilyFields() {
+        var marital = document.getElementById('status_pernikahan')?.value;
+        var childCount = parseInt(document.getElementById('jumlah_anak')?.value || '0', 10);
+        var spouseGroup = document.getElementById('spouse_nik_group');
+        var childrenGroup = document.getElementById('children_nik_group');
+
+        if (spouseGroup) spouseGroup.style.display = marital === 'menikah' ? '' : 'none';
+        if (childrenGroup) childrenGroup.style.display = childCount > 0 ? '' : 'none';
+      }
+
+      document.getElementById('status_pernikahan')?.addEventListener('change', syncFamilyFields);
+      document.getElementById('jumlah_anak')?.addEventListener('input', syncFamilyFields);
+      syncFamilyFields();
+    })();
+  </script>
+@endpush

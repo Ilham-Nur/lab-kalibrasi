@@ -120,7 +120,7 @@
     </div>
   @else
     @php
-      $rows = $categoryDocuments->get($activeCode, collect());
+      $rows = $activeDocuments ?? collect();
     @endphp
 
     @if ($activeCategory?->code === 'MM')
@@ -153,7 +153,7 @@
               </tr>
             </thead>
             <tbody>
-              @forelse ($sections as $section)
+              @forelse ($sectionRows as $section)
                 <tr>
                   <td><strong>{{ $section->chapter_number }}</strong></td>
                   <td>{{ $section->title }}</td>
@@ -224,6 +224,7 @@
             </tbody>
           </table>
         </div>
+        @include('hr.partials.pagination', ['paginator' => $sectionRows])
       </div>
     @endif
 
@@ -400,6 +401,7 @@
           </tbody>
         </table>
       </div>
+      @include('hr.partials.pagination', ['paginator' => $rows])
     </div>
   @endif
 
