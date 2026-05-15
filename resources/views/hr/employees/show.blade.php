@@ -20,6 +20,17 @@
     <div class="card">
       <div class="card-header"><h2 class="card-title">Data Utama</h2></div>
       <div class="modal-body">
+        <div class="detail-user-header">
+          @if ($employee->foto_url)
+            <img src="{{ $employee->foto_url }}" alt="Foto {{ $employee->nama }}" class="detail-avatar detail-avatar-img">
+          @else
+            <div class="detail-avatar">{{ strtoupper(substr($employee->nama, 0, 1)) }}</div>
+          @endif
+          <div>
+            <div class="detail-user-name">{{ $employee->nama }}</div>
+            <div class="detail-user-email">{{ $employee->email ?: 'Email belum diisi' }}</div>
+          </div>
+        </div>
         <div class="detail-grid">
           <div class="detail-item"><div class="detail-label">NIK KTP</div><div class="detail-value">{{ $employee->nik_ktp }}</div></div>
           <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value"><span class="status-badge status-{{ $employee->status_karyawan }}">{{ ucfirst($employee->status_karyawan) }}</span></div></div>

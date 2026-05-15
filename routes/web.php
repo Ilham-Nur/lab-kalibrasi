@@ -3,10 +3,12 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\Hr\AttendanceController;
+use App\Http\Controllers\Hr\DivisionController;
 use App\Http\Controllers\Hr\EmployeeCertificateController;
 use App\Http\Controllers\Hr\EmployeeController;
 use App\Http\Controllers\Hr\EmployeeDocumentController;
 use App\Http\Controllers\Hr\JobDescriptionController;
+use App\Http\Controllers\Hr\PositionController;
 use App\Http\Controllers\Hr\RecruitmentCandidateController;
 use App\Http\Controllers\Hr\RecruitmentRequestController;
 use App\Http\Controllers\Hr\SalaryController;
@@ -27,6 +29,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::prefix('hr')->name('hr.')->group(function () {
         Route::resource('employees', EmployeeController::class);
+        Route::resource('divisions', DivisionController::class)->except(['show']);
+        Route::resource('positions', PositionController::class)->except(['show']);
         Route::post('employees/{employee}/documents', [EmployeeDocumentController::class, 'store'])->name('employees.documents.store');
         Route::get('employee-documents/{document}/download', [EmployeeDocumentController::class, 'download'])->name('employee-documents.download');
         Route::delete('employee-documents/{document}', [EmployeeDocumentController::class, 'destroy'])->name('employee-documents.destroy');

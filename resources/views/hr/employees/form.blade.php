@@ -114,8 +114,24 @@
           </div>
           <div class="form-group">
             <label class="form-label">Foto</label>
-            <input class="form-control @error('foto') is-invalid @enderror" type="file" name="foto" accept=".jpg,.jpeg,.png">
-            @error('foto') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            <div class="file-upload-wrapper @error('foto') has-error @enderror">
+              <input type="file" id="employee-photo-file" name="foto" class="file-input @error('foto') is-invalid @enderror" accept=".jpg,.jpeg,.png" data-allowed-ext="jpg,jpeg,png" data-max-size="2">
+              <label for="employee-photo-file" class="file-label">
+                <div class="file-icon"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+                <div class="file-text">
+                  <span class="file-placeholder" data-default-placeholder="Klik untuk pilih foto atau drag &amp; drop">Klik untuk pilih foto atau drag &amp; drop</span>
+                  <span class="file-meta">JPG, JPEG, PNG - Maks. 2MB</span>
+                </div>
+              </label>
+              <div class="file-preview"></div>
+            </div>
+            @if ($employee->foto_url)
+              <div class="current-file-preview">
+                <img src="{{ $employee->foto_url }}" alt="Foto {{ $employee->nama }}" class="current-photo-thumb">
+                <span>Foto saat ini</span>
+              </div>
+            @endif
+            <div class="invalid-feedback file-error" @error('foto') style="display: block;" @enderror>@error('foto') {{ $message }} @enderror</div>
           </div>
           <div class="form-group">
             <label class="form-label">No NPWP</label>

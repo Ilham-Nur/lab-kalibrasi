@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\JobDescription;
 use App\Models\Position;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class JobDescriptionController extends Controller
 {
@@ -65,7 +66,7 @@ class JobDescriptionController extends Controller
     {
         return [
             'divisions' => Division::where('status', 'aktif')->orderBy('name')->get(),
-            'positions' => Position::where('status', 'aktif')->orderBy('name')->get(),
+            'positions' => Position::with('division')->where('status', 'aktif')->orderBy('name')->get(),
             'employees' => Employee::orderBy('nama')->get(),
             'statuses' => ['aktif', 'nonaktif'],
         ];
@@ -74,8 +75,13 @@ class JobDescriptionController extends Controller
     private function validatedJobDescription(Request $request): array
     {
         return $request->validate([
-            'division_id' => ['nullable', 'exists:divisions,id'],
-            'position_id' => ['nullable', 'exists:positions,id'],
+            'division_id' => ['required', 'exists:divisions,id'],
+            'position_id' => [
+                'required',
+                Rule::exists('positions', 'id')
+                    ->where('division_id', $request->input('division_id'))
+                    ->where('status', 'aktif'),
+            ],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'target_work' => ['nullable', 'string'],

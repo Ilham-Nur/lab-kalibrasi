@@ -69,8 +69,8 @@
           </a>
           <ul class="nav-submenu">
             <li><a href="{{ route('hr.employees.index') }}" class="nav-submenu-link @if(request()->routeIs('hr.employees.*')) active @endif" data-page="hr-karyawan">Data Karyawan</a></li>
+            <li><a href="{{ route('hr.job-descriptions.index') }}" class="nav-submenu-link @if(request()->routeIs('hr.job-descriptions.*', 'hr.divisions.*', 'hr.positions.*')) active @endif" data-page="hr-jobdesk">Jobdesk</a></li>
             <li><a href="{{ route('hr.recruitments.index') }}" class="nav-submenu-link @if(request()->routeIs('hr.recruitments.*')) active @endif" data-page="hr-recruitment">Recruitment</a></li>
-            <li><a href="{{ route('hr.job-descriptions.index') }}" class="nav-submenu-link @if(request()->routeIs('hr.job-descriptions.*')) active @endif" data-page="hr-jobdesk">Jobdesk</a></li>
             <li><a href="{{ route('hr.attendances.index') }}" class="nav-submenu-link @if(request()->routeIs('hr.attendances.*')) active @endif" data-page="hr-absensi">Absensi</a></li>
             <li><a href="{{ route('hr.salaries.index') }}" class="nav-submenu-link @if(request()->routeIs('hr.salaries.*')) active @endif" data-page="hr-payroll">Penggajian</a></li>
           </ul>
