@@ -25,12 +25,14 @@
     <nav class="sidebar-nav">
       <div class="nav-section-label">Main</div>
       <ul class="nav-list">
+        @can('dashboard.view')
         <li class="nav-item @if (request()->routeIs('dashboard')) active @endif">
           <a href="{{ route('dashboard') }}" class="nav-link" data-page="dashboard" data-tooltip="Dashboard">
             <i class="bi bi-grid-1x2-fill nav-icon"></i>
             <span class="nav-label">Dashboard</span>
           </a>
         </li>
+        @endcan
       </ul>
 
       <div class="nav-section-label">Menu</div>
@@ -61,6 +63,7 @@
           </ul>
         </li>
 
+        @can('hr.view')
         <li class="nav-item nav-dropdown @if (request()->routeIs('hr.*')) active open @endif">
           <a href="#" class="nav-link nav-submenu-toggle" data-tooltip="HR Management" aria-expanded="{{ request()->routeIs('hr.*') ? 'true' : 'false' }}">
             <i class="bi bi-people-fill nav-icon"></i>
@@ -75,20 +78,27 @@
             <li><a href="{{ route('hr.salaries.index') }}" class="nav-submenu-link @if(request()->routeIs('hr.salaries.*')) active @endif" data-page="hr-payroll">Penggajian</a></li>
           </ul>
         </li>
+        @endcan
 
-        <li class="nav-item nav-dropdown">
-          <a href="#" class="nav-link nav-submenu-toggle" data-tooltip="Aset dan Peralatan" aria-expanded="false">
+        @can('assets.view')
+        <li class="nav-item nav-dropdown @if (request()->routeIs('assets.*')) active open @endif">
+          <a href="#" class="nav-link nav-submenu-toggle" data-tooltip="Aset" aria-expanded="{{ request()->routeIs('assets.*') ? 'true' : 'false' }}">
             <i class="bi bi-tools nav-icon"></i>
-            <span class="nav-label">Aset dan Peralatan</span>
+            <span class="nav-label">Aset</span>
             <i class="bi bi-chevron-down nav-chevron"></i>
           </a>
           <ul class="nav-submenu">
-            <li><a href="#" class="nav-submenu-link" data-page="aset-daftar">Daftar Aset</a></li>
-            <li><a href="#" class="nav-submenu-link" data-page="aset-kalibrasi">Kalibrasi</a></li>
-            <li><a href="#" class="nav-submenu-link" data-page="aset-maintenance">Maintenance</a></li>
+            <li><a href="{{ route('assets.dashboard') }}" class="nav-submenu-link @if(request()->routeIs('assets.dashboard')) active @endif" data-page="aset-dashboard">Dashboard Aset</a></li>
+            <li><a href="{{ route('assets.index') }}" class="nav-submenu-link @if(request()->routeIs('assets.index', 'assets.show', 'assets.edit')) active @endif" data-page="aset-data">Data Aset</a></li>
+            <li><a href="{{ route('assets.inspections.index') }}" class="nav-submenu-link @if(request()->routeIs('assets.inspections.*')) active @endif" data-page="aset-inspections">Pemeriksaan Berkala</a></li>
+            <li><a href="{{ route('assets.calibrations.index') }}" class="nav-submenu-link @if(request()->routeIs('assets.calibrations.*')) active @endif" data-page="aset-calibrations">Kalibrasi</a></li>
+            <li><a href="{{ route('assets.procurements.index') }}" class="nav-submenu-link @if(request()->routeIs('assets.procurements.*', 'assets.receipts.*', 'assets.convert.*')) active @endif" data-page="aset-procurements">Pengajuan dan Pengadaan</a></li>
+            <li><a href="{{ route('assets.reports.index') }}" class="nav-submenu-link @if(request()->routeIs('assets.reports.*')) active @endif" data-page="aset-reports">Laporan Aset</a></li>
           </ul>
         </li>
+        @endcan
 
+        @can('documents.view')
         <li class="nav-item nav-dropdown @if (request()->routeIs('dokumen-iso.*')) active open @endif">
           <a href="#" class="nav-link nav-submenu-toggle" data-tooltip="Dokumen ISO" aria-expanded="{{ request()->routeIs('dokumen-iso.*') ? 'true' : 'false' }}">
             <i class="bi bi-file-earmark-text-fill nav-icon"></i>
@@ -115,6 +125,25 @@
             </li>
           </ul>
         </li>
+        @endcan
+
+        @canany(['users.view', 'roles.view'])
+        <li class="nav-item nav-dropdown @if (request()->routeIs('management.*')) active open @endif">
+          <a href="#" class="nav-link nav-submenu-toggle" data-tooltip="Manajemen Akses" aria-expanded="{{ request()->routeIs('management.*') ? 'true' : 'false' }}">
+            <i class="bi bi-shield-lock-fill nav-icon"></i>
+            <span class="nav-label">Manajemen Akses</span>
+            <i class="bi bi-chevron-down nav-chevron"></i>
+          </a>
+          <ul class="nav-submenu">
+            @can('users.view')
+              <li><a href="{{ route('management.users.index') }}" class="nav-submenu-link @if(request()->routeIs('management.users.*')) active @endif" data-page="management-users">Manajemen User</a></li>
+            @endcan
+            @can('roles.view')
+              <li><a href="{{ route('management.roles.index') }}" class="nav-submenu-link @if(request()->routeIs('management.roles.*')) active @endif" data-page="management-roles">Manajemen Role</a></li>
+            @endcan
+          </ul>
+        </li>
+        @endcanany
       </ul>
     </nav>
 

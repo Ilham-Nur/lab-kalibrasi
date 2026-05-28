@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Hr;
 
+use App\Http\Controllers\Concerns\NormalizesMoneyInputs;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\Salary;
@@ -9,6 +10,8 @@ use Illuminate\Http\Request;
 
 class SalaryController extends Controller
 {
+    use NormalizesMoneyInputs;
+
     public function index()
     {
         $salaries = Salary::with('employee')
@@ -87,6 +90,8 @@ class SalaryController extends Controller
 
     private function validatedSalary(Request $request): array
     {
+        $this->normalizeMoneyInputs($request, ['basic_salary', 'allowance', 'overtime', 'deduction']);
+
         return $request->validate([
             'employee_id' => ['required', 'exists:employees,id'],
             'salary_period' => ['required', 'date_format:Y-m'],

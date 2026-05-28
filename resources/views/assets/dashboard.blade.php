@@ -1,0 +1,18 @@
+@extends('layouts.app')
+@section('title', 'Dashboard Aset')
+@section('content')
+  <div class="page-header"><div><h1 class="page-title">Dashboard Aset</h1><p class="page-subtitle">Ringkasan status aset, kalibrasi, pemeriksaan, dan pengadaan.</p></div><a class="btn btn-primary btn-sm" href="{{ route('assets.create') }}"><i class="bi bi-plus-lg"></i> Tambah Aset</a></div>
+  @include('hr.partials.alerts')
+  <div class="stats-grid">
+    @foreach([
+      ['Total aset','total_assets','bi-box-seam','blue'],['Aset aktif','active_assets','bi-check-circle','green'],['Aset tidak aktif','inactive_assets','bi-slash-circle','amber'],['Aset rusak','damaged_assets','bi-exclamation-triangle','red'],['Tidak layak pakai','not_usable_assets','bi-x-octagon','red'],['Dalam kalibrasi','in_calibration_assets','bi-speedometer2','amber'],['Kalibrasi akan expired','calibration_due_soon','bi-clock-history','amber'],['Kalibrasi expired','calibration_expired','bi-calendar-x','red'],['Pemeriksaan overdue','inspection_overdue','bi-clipboard-x','red'],['Menunggu approval','waiting_approval','bi-hourglass-split','blue']
+    ] as $stat)
+      <div class="stat-card stat-card-{{ $stat[3] }}"><div class="stat-icon"><i class="bi {{ $stat[2] }}"></i></div><div class="stat-body"><div class="stat-value">{{ $stats[$stat[1]] }}</div><div class="stat-label">{{ $stat[0] }}</div></div></div>
+    @endforeach
+  </div>
+  <div class="iso-detail-grid">
+    <div class="card"><div class="card-header"><h2 class="card-title">Kalibrasi Hampir/Expired</h2></div><div class="table-responsive"><table class="data-table"><thead><tr><th>Aset</th><th>Berikutnya</th><th>Status</th></tr></thead><tbody>@forelse($calibrationDueAssets as $asset)<tr><td><strong>{{ $asset->asset_code }}</strong><div class="td-email-sub">{{ $asset->name }}</div></td><td>{{ $asset->next_calibration_date?->format('d M Y') ?? '-' }}</td><td><span class="status-badge status-{{ $asset->status }}">{{ str_replace('_',' ',ucfirst($asset->status)) }}</span></td></tr>@empty<tr><td colspan="3"><div class="empty-state"><div class="empty-title">Tidak ada aset jatuh tempo</div></div></td></tr>@endforelse</tbody></table></div></div>
+    <div class="card"><div class="card-header"><h2 class="card-title">Pemeriksaan Overdue</h2></div><div class="table-responsive"><table class="data-table"><thead><tr><th>Aset</th><th>Jadwal</th><th>Lokasi</th></tr></thead><tbody>@forelse($overdueInspectionAssets as $asset)<tr><td><strong>{{ $asset->asset_code }}</strong><div class="td-email-sub">{{ $asset->name }}</div></td><td>{{ $asset->next_inspection_date?->format('d M Y') ?? '-' }}</td><td>{{ $asset->location?->name ?? '-' }}</td></tr>@empty<tr><td colspan="3"><div class="empty-state"><div class="empty-title">Tidak ada pemeriksaan overdue</div></div></td></tr>@endforelse</tbody></table></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h2 class="card-title">Pengadaan Menunggu Approval</h2></div><div class="table-responsive"><table class="data-table"><thead><tr><th>Nomor</th><th>Pemohon</th><th>Status</th><th>Total</th></tr></thead><tbody>@forelse($waitingProcurements as $procurement)<tr><td><a href="{{ route('assets.procurements.show',$procurement) }}">{{ $procurement->procurement_number }}</a></td><td>{{ $procurement->requestedBy?->name ?? '-' }}</td><td><span class="status-badge status-pending">{{ str_replace('_',' ',ucfirst($procurement->status)) }}</span></td><td>Rp {{ number_format($procurement->total_estimated_cost,0,',','.') }}</td></tr>@empty<tr><td colspan="4"><div class="empty-state"><div class="empty-title">Tidak ada approval tertunda</div></div></td></tr>@endforelse</tbody></table></div></div>
+@endsection

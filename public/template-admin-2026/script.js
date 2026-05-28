@@ -69,7 +69,69 @@ $(function () {
     updateStats();
     filterData();
     syncMultiPickers($(document));
+    initMoneyInputs($(document));
   }
+
+  window.AppMoneyInput = {
+    raw: moneyRawValue,
+    format: formatMoneyValue,
+    init: initMoneyInputs
+  };
+
+  function moneyRawValue(value) {
+    var text = (value || '').toString().trim();
+
+    if (!text) return '';
+
+    text = text.replace(/Rp/gi, '').replace(/\s/g, '');
+
+    if (/^\d+\.\d{1,2}$/.test(text)) {
+      text = text.split('.')[0];
+    } else if (text.indexOf(',') !== -1) {
+      text = text.split(',')[0];
+    }
+
+    return text.replace(/[^\d]/g, '');
+  }
+
+  function formatMoneyValue(value) {
+    var raw = moneyRawValue(value);
+
+    if (!raw) return '';
+
+    raw = raw.replace(/^0+(?=\d)/, '');
+
+    return raw.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  function initMoneyInputs(scope) {
+    var $scope = scope && scope.length ? scope : $(document);
+
+    $scope.find('.js-money-input').addBack('.js-money-input').each(function () {
+      var $input = $(this);
+
+      if ($input.attr('type') === 'number') {
+        $input.attr('type', 'text');
+      }
+
+      $input.attr('inputmode', 'numeric').val(formatMoneyValue($input.val()));
+    });
+  }
+
+  $(document).on('input', '.js-money-input', function () {
+    var formatted = formatMoneyValue(this.value);
+    this.value = formatted;
+  });
+
+  $(document).on('blur', '.js-money-input', function () {
+    this.value = formatMoneyValue(this.value);
+  });
+
+  $(document).on('submit', 'form', function () {
+    $(this).find('.js-money-input').each(function () {
+      this.value = moneyRawValue(this.value);
+    });
+  });
 
   /* =============================================================
      STAT CARDS

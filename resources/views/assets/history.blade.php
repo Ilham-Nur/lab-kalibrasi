@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('title','Detail Riwayat Aset')
+@section('content')
+  <div class="page-header"><div><h1 class="page-title">Detail Riwayat Aset</h1><p class="page-subtitle">{{ $asset->asset_code }} - {{ $asset->name }}</p></div><a class="btn btn-outline btn-sm" href="{{ route('assets.show',$asset) }}"><i class="bi bi-arrow-left"></i> Kembali</a></div>
+  <div class="card"><div class="table-responsive"><table class="data-table"><thead><tr><th>Waktu</th><th>Status</th><th>Kondisi</th><th>Deskripsi</th><th>Oleh</th></tr></thead><tbody>@forelse($logs as $log)<tr><td>{{ $log->created_at?->format('d M Y H:i') }}</td><td>{{ str_replace('_',' ',ucfirst($log->old_status ?: '-')) }} -> {{ str_replace('_',' ',ucfirst($log->new_status)) }}</td><td>{{ str_replace('_',' ',ucfirst($log->old_condition ?: '-')) }} -> {{ str_replace('_',' ',ucfirst($log->new_condition ?: '-')) }}</td><td>{{ $log->description ?: '-' }}</td><td>{{ $log->changedBy?->name ?? '-' }}</td></tr>@empty<tr><td colspan="5"><div class="empty-state"><div class="empty-title">Belum ada riwayat</div></div></td></tr>@endforelse</tbody></table></div>@include('hr.partials.pagination',['paginator'=>$logs])</div>
+@endsection

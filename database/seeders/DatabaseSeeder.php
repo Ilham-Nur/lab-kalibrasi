@@ -28,5 +28,8 @@ class DatabaseSeeder extends Seeder
         $this->call(DocumentCategorySeeder::class);
         $this->call(DocumentSectionSeeder::class);
         $this->call(DivisionPositionSeeder::class);
+        $this->call(AssetCategorySeeder::class);
+        $this->call(AssetLocationSeeder::class);
+        $this->call(RolePermissionSeeder::class);
     }
 }

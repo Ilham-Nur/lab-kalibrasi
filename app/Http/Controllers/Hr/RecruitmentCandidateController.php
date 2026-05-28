@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Hr;
 
+use App\Http\Controllers\Concerns\NormalizesMoneyInputs;
 use App\Http\Controllers\Controller;
 use App\Models\RecruitmentCandidate;
 use App\Models\RecruitmentRequest;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Storage;
 
 class RecruitmentCandidateController extends Controller
 {
+    use NormalizesMoneyInputs;
+
     public function store(Request $request, RecruitmentRequest $recruitment)
     {
         $validated = $this->validatedCandidate($request);
@@ -48,6 +51,8 @@ class RecruitmentCandidateController extends Controller
 
     private function validatedCandidate(Request $request): array
     {
+        $this->normalizeMoneyInputs($request, ['expected_salary']);
+
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],

@@ -2185,7 +2185,8 @@ input[type="radio"].check-input:checked {
   line-height: 1;
 }
 
-.status-active { background: var(--success-bg); color: var(--success-text); }
+.status-active,
+.status-approved { background: var(--success-bg); color: var(--success-text); }
 .status-aktif,
 .status-hadir,
 .status-sudah_dibayar,
@@ -2199,6 +2200,7 @@ input[type="radio"].check-input:checked {
 .status-screening,
 .status-interview,
 .status-belum_dibayar,
+.status-revision,
 .status-izin,
 .status-sakit,
 .status-cuti { background: var(--warning-bg); color: var(--warning-text); }
@@ -2208,8 +2210,10 @@ input[type="radio"].check-input:checked {
 .status-resign,
 .status-ditutup,
 .status-dibatalkan,
+.status-skipped,
 .status-ditolak,
 .status-alpha { background: #f1f3f6; color: var(--text-secondary); }
+.status-rejected { background: var(--danger-bg); color: var(--danger-text); }
 
 .iso-detail-grid {
   display: grid;
