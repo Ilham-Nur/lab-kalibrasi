@@ -11,6 +11,7 @@ class AssetDocument extends Model
     protected $fillable = [
         'asset_id',
         'procurement_id',
+        'receipt_id',
         'calibration_id',
         'inspection_id',
         'document_type',
@@ -28,6 +29,11 @@ class AssetDocument extends Model
     public function procurement(): BelongsTo
     {
         return $this->belongsTo(AssetProcurement::class, 'procurement_id');
+    }
+
+    public function receipt(): BelongsTo
+    {
+        return $this->belongsTo(AssetReceipt::class, 'receipt_id');
     }
 
     public function calibration(): BelongsTo

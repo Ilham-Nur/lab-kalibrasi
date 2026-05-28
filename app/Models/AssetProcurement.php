@@ -11,6 +11,7 @@ class AssetProcurement extends Model
     protected $fillable = [
         'procurement_number',
         'requested_by',
+        'asset_supplier_id',
         'request_date',
         'department',
         'purpose',
@@ -35,6 +36,11 @@ class AssetProcurement extends Model
     public function requestedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'requested_by');
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(AssetSupplier::class, 'asset_supplier_id');
     }
 
     public function items(): HasMany

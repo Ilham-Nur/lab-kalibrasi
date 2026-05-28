@@ -80,6 +80,15 @@
         </li>
         @endcan
 
+        @can('asset-suppliers.view')
+        <li class="nav-item @if (request()->routeIs('suppliers.*')) active @endif">
+          <a href="{{ route('suppliers.index') }}" class="nav-link" data-page="suppliers" data-tooltip="Supplier / Vendor">
+            <i class="bi bi-building-fill-gear nav-icon"></i>
+            <span class="nav-label">Supplier / Vendor</span>
+          </a>
+        </li>
+        @endcan
+
         @can('assets.view')
         <li class="nav-item nav-dropdown @if (request()->routeIs('assets.*')) active open @endif">
           <a href="#" class="nav-link nav-submenu-toggle" data-tooltip="Aset" aria-expanded="{{ request()->routeIs('assets.*') ? 'true' : 'false' }}">

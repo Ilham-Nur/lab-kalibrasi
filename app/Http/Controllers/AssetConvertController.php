@@ -24,7 +24,7 @@ class AssetConvertController extends Controller
 
     public function show(AssetReceipt $receipt)
     {
-        $receipt->load(['procurement', 'items.procurementItem']);
+        $receipt->load(['procurement', 'items.procurementItem', 'items.category', 'items.location']);
 
         return view('assets.convert.show', ['receipt' => $receipt]);
     }
@@ -43,11 +43,17 @@ class AssetConvertController extends Controller
             for ($i = 1; $i <= $quantity; $i++) {
                 $asset = Asset::create([
                     'asset_code' => $numberService->assetCode(),
+                    'asset_category_id' => $receiptItem->asset_category_id,
+                    'asset_location_id' => $receiptItem->asset_location_id,
                     'procurement_id' => $receiptItem->receipt->procurement_id,
                     'receipt_id' => $receiptItem->receipt_id,
                     'name' => $quantity > 1 ? "{$receiptItem->item_name} {$i}" : $receiptItem->item_name,
-                    'specification' => $receiptItem->procurementItem?->specification,
+                    'brand' => $receiptItem->brand,
+                    'model' => $receiptItem->model,
+                    'serial_number' => $receiptItem->serial_number,
+                    'specification' => $receiptItem->specification ?: $receiptItem->procurementItem?->specification,
                     'acquisition_date' => $receiptItem->receipt->received_date,
+                    'acquisition_value' => $receiptItem->acquisition_value,
                     'supplier_name' => $receiptItem->receipt->supplier_name,
                     'source_type' => 'procurement',
                     'condition' => $this->normalizeCondition($receiptItem->condition),
@@ -65,11 +71,12 @@ class AssetConvertController extends Controller
             }
 
             $receiptItem->update(['is_converted_to_asset' => true]);
-            $receipt = $receiptItem->receipt()->with('items')->first();
+            $receipt = $receiptItem->receipt()->with(['items', 'procurement.items.receiptItems', 'procurement.receipts.items'])->first();
             if ($receipt->items->every(fn ($item) => $item->is_converted_to_asset)) {
                 $receipt->update(['status' => 'converted_to_asset']);
-                $receipt->procurement?->update(['status' => 'converted_to_asset']);
             }
+
+            $this->syncProcurementStatusAfterConversion($receipt);
 
             return $assets->count();
         });
@@ -82,5 +89,30 @@ class AssetConvertController extends Controller
         return in_array($condition, ['good', 'minor_damage', 'damaged', 'under_repair', 'unknown'], true)
             ? $condition
             : 'good';
+    }
+
+    private function syncProcurementStatusAfterConversion(AssetReceipt $receipt): void
+    {
+        $procurement = $receipt->procurement;
+        if (! $procurement) {
+            return;
+        }
+
+        $fullyReceived = $procurement->items->every(function ($item) {
+            return (float) $item->receiptItems->sum('quantity_received') >= (float) $item->quantity;
+        });
+
+        $receivedItems = $procurement->receipts
+            ->flatMap(fn ($receipt) => $receipt->items)
+            ->filter(fn ($item) => (float) $item->quantity_received > 0);
+        $allReceivedItemsConverted = $receivedItems->isNotEmpty()
+            && $receivedItems->every(fn ($item) => $item->is_converted_to_asset);
+
+        if ($fullyReceived && $allReceivedItemsConverted) {
+            $procurement->update(['status' => 'converted_to_asset']);
+            return;
+        }
+
+        $procurement->update(['status' => $fullyReceived ? 'received' : 'purchasing']);
     }
 }

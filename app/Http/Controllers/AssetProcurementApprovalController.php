@@ -10,7 +10,7 @@ class AssetProcurementApprovalController extends Controller
 {
     public function index()
     {
-        $procurements = AssetProcurement::with(['requestedBy', 'items', 'approvals.approvedBy'])
+        $procurements = AssetProcurement::with(['requestedBy', 'supplier', 'items', 'approvals.approvedBy'])
             ->whereIn('status', ['waiting_supervisor', 'waiting_finance', 'waiting_director'])
             ->oldest('request_date')
             ->get();

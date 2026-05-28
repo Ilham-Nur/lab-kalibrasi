@@ -2186,7 +2186,9 @@ input[type="radio"].check-input:checked {
 }
 
 .status-active,
-.status-approved { background: var(--success-bg); color: var(--success-text); }
+.status-approved,
+.status-fully_received,
+.status-converted_to_asset { background: var(--success-bg); color: var(--success-text); }
 .status-aktif,
 .status-hadir,
 .status-sudah_dibayar,
@@ -2201,6 +2203,8 @@ input[type="radio"].check-input:checked {
 .status-interview,
 .status-belum_dibayar,
 .status-revision,
+.status-partial_received,
+.status-purchasing,
 .status-izin,
 .status-sakit,
 .status-cuti { background: var(--warning-bg); color: var(--warning-text); }

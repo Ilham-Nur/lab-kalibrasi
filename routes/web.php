@@ -11,6 +11,7 @@ use App\Http\Controllers\AssetProcurementApprovalController;
 use App\Http\Controllers\AssetProcurementController;
 use App\Http\Controllers\AssetReceiptController;
 use App\Http\Controllers\AssetReportController;
+use App\Http\Controllers\AssetSupplierController;
 use App\Http\Controllers\Hr\AttendanceController;
 use App\Http\Controllers\Hr\DivisionController;
 use App\Http\Controllers\Hr\EmployeeCertificateController;
@@ -51,6 +52,12 @@ Route::middleware('auth')->group(function () {
             ->middlewareFor(['edit', 'update'], 'permission:roles.edit')
             ->middlewareFor(['destroy'], 'permission:roles.delete');
     });
+
+    Route::resource('suppliers', AssetSupplierController::class)->except(['show'])
+        ->middlewareFor(['index'], 'permission:asset-suppliers.view')
+        ->middlewareFor(['create', 'store'], 'permission:asset-suppliers.create')
+        ->middlewareFor(['edit', 'update'], 'permission:asset-suppliers.edit')
+        ->middlewareFor(['destroy'], 'permission:asset-suppliers.delete');
 
     Route::prefix('assets')->name('assets.')->group(function () {
         Route::get('dashboard', [AssetDashboardController::class, 'index'])->middleware('permission:assets.view')->name('dashboard');

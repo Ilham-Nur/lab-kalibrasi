@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\NormalizesMoneyInputs;
 use App\Models\AssetProcurement;
+use App\Models\AssetSupplier;
 use App\Services\AssetNumberService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +16,12 @@ class AssetProcurementController extends Controller
 
     public function index()
     {
-        $procurements = AssetProcurement::with('requestedBy')
-            ->when(request('search'), fn ($query, $search) => $query->where('procurement_number', 'like', "%{$search}%")->orWhere('department', 'like', "%{$search}%"))
+        $procurements = AssetProcurement::with(['requestedBy', 'supplier'])
+            ->when(request('search'), fn ($query, $search) => $query->where(function ($subQuery) use ($search) {
+                $subQuery->where('procurement_number', 'like', "%{$search}%")
+                    ->orWhere('department', 'like', "%{$search}%")
+                    ->orWhereHas('supplier', fn ($supplierQuery) => $supplierQuery->where('name', 'like', "%{$search}%"));
+            }))
             ->when(request('status'), fn ($query, $status) => $query->where('status', $status))
             ->latest()
             ->paginate(10)
@@ -30,10 +35,10 @@ class AssetProcurementController extends Controller
 
     public function create()
     {
-        return view('assets.procurements.create', [
+        return view('assets.procurements.create', $this->formData([
             'procurement' => new AssetProcurement(['request_date' => now(), 'status' => 'draft']),
             'items' => collect(),
-        ]);
+        ]));
     }
 
     public function store(Request $request, AssetNumberService $numberService)
@@ -52,6 +57,7 @@ class AssetProcurementController extends Controller
             $procurement = AssetProcurement::create([
                 'procurement_number' => $numberService->procurementNumber(),
                 'requested_by' => $request->user()?->id,
+                'asset_supplier_id' => $validated['asset_supplier_id'],
                 'request_date' => $validated['request_date'],
                 'department' => $validated['department'] ?? null,
                 'purpose' => $validated['purpose'] ?? null,
@@ -70,7 +76,7 @@ class AssetProcurementController extends Controller
 
     public function show(AssetProcurement $procurement)
     {
-        $procurement->load(['requestedBy', 'items.receiptItems', 'approvals.approvedBy', 'receipts.items']);
+        $procurement->load(['requestedBy', 'supplier', 'items.receiptItems', 'approvals.approvedBy', 'receipts.items']);
 
         return view('assets.procurements.show', ['procurement' => $procurement]);
     }
@@ -79,10 +85,10 @@ class AssetProcurementController extends Controller
     {
         $procurement->load('items');
 
-        return view('assets.procurements.edit', [
+        return view('assets.procurements.edit', $this->formData([
             'procurement' => $procurement,
             'items' => $procurement->items,
-        ]);
+        ]));
     }
 
     public function update(Request $request, AssetProcurement $procurement)
@@ -103,6 +109,7 @@ class AssetProcurementController extends Controller
             }
 
             $procurement->update([
+                'asset_supplier_id' => $validated['asset_supplier_id'],
                 'request_date' => $validated['request_date'],
                 'department' => $validated['department'] ?? null,
                 'purpose' => $validated['purpose'] ?? null,
@@ -156,6 +163,7 @@ class AssetProcurementController extends Controller
 
         return $request->validate([
             'request_date' => ['required', 'date'],
+            'asset_supplier_id' => ['required', 'exists:asset_suppliers,id'],
             'department' => ['nullable', 'string', 'max:255'],
             'purpose' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
@@ -165,7 +173,6 @@ class AssetProcurementController extends Controller
             'items.*.quantity' => ['nullable', 'numeric', 'min:0.01'],
             'items.*.unit' => ['nullable', 'string', 'max:50'],
             'items.*.estimated_unit_price' => ['nullable', 'numeric', 'min:0'],
-            'items.*.supplier_candidate' => ['nullable', 'string', 'max:255'],
             'items.*.reason' => ['nullable', 'string'],
         ]);
     }
@@ -182,7 +189,7 @@ class AssetProcurementController extends Controller
                 'unit' => $item['unit'] ?? null,
                 'estimated_unit_price' => $unitPrice,
                 'estimated_total_price' => $quantity * $unitPrice,
-                'supplier_candidate' => $item['supplier_candidate'] ?? null,
+                'supplier_candidate' => null,
                 'reason' => $item['reason'] ?? null,
                 'status' => $item['status'] ?? null,
             ]);
@@ -197,5 +204,12 @@ class AssetProcurementController extends Controller
     private function statuses(): array
     {
         return ['draft', 'submitted', 'waiting_supervisor', 'waiting_finance', 'waiting_director', 'approved', 'rejected', 'purchasing', 'received', 'converted_to_asset', 'cancelled'];
+    }
+
+    private function formData(array $data): array
+    {
+        return $data + [
+            'suppliers' => AssetSupplier::where('status', 'active')->orderBy('name')->get(),
+        ];
     }
 }

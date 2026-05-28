@@ -44,10 +44,11 @@
               <div class="approval-ticket-title">{{ str($procurement->purpose ?: 'Pengajuan pengadaan')->limit(72) }}</div>
               <div class="approval-ticket-meta">
                 <span><i class="bi bi-person"></i> {{ $procurement->requestedBy?->name ?? '-' }}</span>
+                <span><i class="bi bi-building-check"></i> {{ $procurement->supplier?->name ?? '-' }}</span>
                 <span><i class="bi bi-building"></i> {{ $procurement->department ?: '-' }}</span>
               </div>
               <div class="approval-ticket-footer">
-                <span>{{ $totalItems }} item / {{ number_format($totalQuantity, 0, ',', '.') }} qty</span>
+                <span>{{ $totalItems }} item / {{ format_qty($totalQuantity) }} qty</span>
                 <strong>Rp {{ number_format($procurement->total_estimated_cost, 0, ',', '.') }}</strong>
               </div>
               <div class="approval-ticket-aging">
@@ -112,6 +113,7 @@
             <div class="detail-grid">
               <div class="detail-item"><div class="detail-label">Tanggal Request</div><div class="detail-value">{{ $procurement->request_date?->format('d M Y') }}</div></div>
               <div class="detail-item"><div class="detail-label">Department</div><div class="detail-value">{{ $procurement->department ?: '-' }}</div></div>
+              <div class="detail-item"><div class="detail-label">Supplier / Vendor</div><div class="detail-value">{{ $procurement->supplier?->name ?? '-' }}</div></div>
               <div class="detail-item"><div class="detail-label">Requester</div><div class="detail-value">{{ $procurement->requestedBy?->name ?? '-' }}</div></div>
               <div class="detail-item"><div class="detail-label">Purpose</div><div class="detail-value">{{ $procurement->purpose ?: '-' }}</div></div>
               <div class="detail-item"><div class="detail-label">Notes</div><div class="detail-value">{{ $procurement->notes ?: '-' }}</div></div>
@@ -121,15 +123,15 @@
             <h3 class="revision-modal-heading">Item Pengadaan</h3>
             <div class="table-responsive">
               <table class="data-table">
-                <thead><tr><th>Item</th><th>Qty</th><th>Harga</th><th>Total</th><th>Supplier</th></tr></thead>
+                <thead><tr><th>Item</th><th>Qty</th><th>Harga</th><th>Total</th><th>Alasan</th></tr></thead>
                 <tbody>
                   @foreach ($procurement->items as $item)
                     <tr>
                       <td>{{ $item->item_name }}<div class="td-email-sub">{{ $item->specification }}</div></td>
-                      <td>{{ $item->quantity }} {{ $item->unit }}</td>
+                      <td>{{ format_qty($item->quantity) }} {{ $item->unit }}</td>
                       <td>Rp {{ number_format($item->estimated_unit_price, 0, ',', '.') }}</td>
                       <td>Rp {{ number_format($item->estimated_total_price, 0, ',', '.') }}</td>
-                      <td>{{ $item->supplier_candidate ?: '-' }}</td>
+                      <td>{{ $item->reason ?: '-' }}</td>
                     </tr>
                   @endforeach
                 </tbody>

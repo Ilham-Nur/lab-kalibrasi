@@ -27,6 +27,7 @@
       <div class="detail-grid">
         <div class="detail-item"><div class="detail-label">Request Date</div><div class="detail-value">{{ $procurement->request_date?->format('d M Y') }}</div></div>
         <div class="detail-item"><div class="detail-label">Department</div><div class="detail-value">{{ $procurement->department ?: '-' }}</div></div>
+        <div class="detail-item"><div class="detail-label">Supplier / Vendor</div><div class="detail-value">{{ $procurement->supplier?->name ?? '-' }}</div></div>
         <div class="detail-item"><div class="detail-label">Requested By</div><div class="detail-value">{{ $procurement->requestedBy?->name ?? '-' }}</div></div>
         <div class="detail-item"><div class="detail-label">Total</div><div class="detail-value">Rp {{ number_format($procurement->total_estimated_cost, 0, ',', '.') }}</div></div>
         <div class="detail-item"><div class="detail-label">Purpose</div><div class="detail-value">{{ $procurement->purpose ?: '-' }}</div></div>
@@ -39,15 +40,21 @@
     <div class="card-header"><h2 class="card-title">Item</h2></div>
     <div class="table-responsive">
       <table class="data-table">
-        <thead><tr><th>Item</th><th>Qty</th><th>Harga</th><th>Total</th><th>Supplier</th></tr></thead>
+        <thead><tr><th>Item</th><th>Qty Approval</th><th>Sudah Diterima</th><th>Sisa</th><th>Harga</th><th>Total</th><th>Alasan</th></tr></thead>
         <tbody>
           @foreach ($procurement->items as $item)
+            @php
+              $receivedQuantity = (float) $item->receiptItems->sum('quantity_received');
+              $remainingQuantity = max((float) $item->quantity - $receivedQuantity, 0);
+            @endphp
             <tr>
               <td>{{ $item->item_name }}<div class="td-email-sub">{{ $item->specification }}</div></td>
-              <td>{{ $item->quantity }} {{ $item->unit }}</td>
+              <td>{{ format_qty($item->quantity) }} {{ $item->unit }}</td>
+              <td>{{ format_qty($receivedQuantity) }} {{ $item->unit }}</td>
+              <td>{{ format_qty($remainingQuantity) }} {{ $item->unit }}</td>
               <td>Rp {{ number_format($item->estimated_unit_price, 0, ',', '.') }}</td>
               <td>Rp {{ number_format($item->estimated_total_price, 0, ',', '.') }}</td>
-              <td>{{ $item->supplier_candidate ?: '-' }}</td>
+              <td>{{ $item->reason ?: '-' }}</td>
             </tr>
           @endforeach
         </tbody>

@@ -13,6 +13,7 @@ class AssetReceipt extends Model
         'receipt_number',
         'received_by',
         'received_date',
+        'asset_supplier_id',
         'supplier_name',
         'delivery_note_number',
         'invoice_number',
@@ -35,9 +36,19 @@ class AssetReceipt extends Model
         return $this->belongsTo(User::class, 'received_by');
     }
 
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(AssetSupplier::class, 'asset_supplier_id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(AssetReceiptItem::class, 'receipt_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(AssetDocument::class, 'receipt_id');
     }
 
     public function assets(): HasMany

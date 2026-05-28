@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
         $this->call(DivisionPositionSeeder::class);
         $this->call(AssetCategorySeeder::class);
         $this->call(AssetLocationSeeder::class);
+        $this->call(AssetSupplierSeeder::class);
         $this->call(RolePermissionSeeder::class);
     }
 }
