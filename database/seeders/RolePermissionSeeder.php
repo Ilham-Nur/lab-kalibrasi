@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -62,87 +63,111 @@ class RolePermissionSeeder extends Seeder
             'asset-reports.view',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::findOrCreate($permission, 'web');
-        }
+        $permissionModels = collect($permissions)
+            ->mapWithKeys(fn (string $permission) => [
+                $permission => Permission::findOrCreate($permission, 'web'),
+            ]);
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $admin = Role::findOrCreate('Admin', 'web');
-        $admin->syncPermissions($permissions);
+        $admin->syncPermissions($permissionModels->values()->all());
 
         Role::findOrCreate('Supervisor', 'web')->syncPermissions([
-            'dashboard.view',
-            'assets.view',
-            'asset-procurements.view',
-            'asset-procurements.approve',
-            'asset-reports.view',
+            ...$this->permissionModels($permissionModels, [
+                'dashboard.view',
+                'assets.view',
+                'asset-procurements.view',
+                'asset-procurements.approve',
+                'asset-reports.view',
+            ]),
         ]);
 
         Role::findOrCreate('Keuangan', 'web')->syncPermissions([
-            'dashboard.view',
-            'assets.view',
-            'asset-procurements.view',
-            'asset-procurements.approve',
-            'asset-reports.view',
+            ...$this->permissionModels($permissionModels, [
+                'dashboard.view',
+                'assets.view',
+                'asset-procurements.view',
+                'asset-procurements.approve',
+                'asset-reports.view',
+            ]),
         ]);
 
         Role::findOrCreate('Direktur', 'web')->syncPermissions([
-            'dashboard.view',
-            'assets.view',
-            'asset-procurements.view',
-            'asset-procurements.approve',
-            'asset-reports.view',
+            ...$this->permissionModels($permissionModels, [
+                'dashboard.view',
+                'assets.view',
+                'asset-procurements.view',
+                'asset-procurements.approve',
+                'asset-reports.view',
+            ]),
         ]);
 
         Role::findOrCreate('Staff Pengadaan', 'web')->syncPermissions([
-            'dashboard.view',
-            'assets.view',
-            'asset-procurements.view',
-            'asset-procurements.create',
-            'asset-procurements.edit',
-            'asset-suppliers.view',
-            'asset-suppliers.create',
-            'asset-suppliers.edit',
-            'asset-receipts.view',
-            'asset-receipts.create',
-            'asset-receipts.edit',
-            'asset-conversions.view',
-            'asset-conversions.create',
+            ...$this->permissionModels($permissionModels, [
+                'dashboard.view',
+                'assets.view',
+                'asset-procurements.view',
+                'asset-procurements.create',
+                'asset-procurements.edit',
+                'asset-suppliers.view',
+                'asset-suppliers.create',
+                'asset-suppliers.edit',
+                'asset-receipts.view',
+                'asset-receipts.create',
+                'asset-receipts.edit',
+                'asset-conversions.view',
+                'asset-conversions.create',
+            ]),
         ]);
 
         Role::findOrCreate('Staff Lab', 'web')->syncPermissions([
-            'dashboard.view',
-            'assets.view',
-            'assets.create',
-            'assets.edit',
-            'asset-inspections.view',
-            'asset-inspections.create',
-            'asset-inspections.edit',
-            'asset-calibrations.view',
-            'asset-reports.view',
+            ...$this->permissionModels($permissionModels, [
+                'dashboard.view',
+                'assets.view',
+                'assets.create',
+                'assets.edit',
+                'asset-inspections.view',
+                'asset-inspections.create',
+                'asset-inspections.edit',
+                'asset-calibrations.view',
+                'asset-reports.view',
+            ]),
         ]);
 
         Role::findOrCreate('Teknisi Kalibrasi', 'web')->syncPermissions([
-            'dashboard.view',
-            'assets.view',
-            'asset-calibrations.view',
-            'asset-calibrations.create',
-            'asset-calibrations.edit',
-            'asset-reports.view',
+            ...$this->permissionModels($permissionModels, [
+                'dashboard.view',
+                'assets.view',
+                'asset-calibrations.view',
+                'asset-calibrations.create',
+                'asset-calibrations.edit',
+                'asset-reports.view',
+            ]),
         ]);
 
         Role::findOrCreate('Viewer', 'web')->syncPermissions([
-            'dashboard.view',
-            'assets.view',
-            'asset-suppliers.view',
-            'asset-procurements.view',
-            'asset-receipts.view',
-            'asset-inspections.view',
-            'asset-calibrations.view',
-            'asset-reports.view',
+            ...$this->permissionModels($permissionModels, [
+                'dashboard.view',
+                'assets.view',
+                'asset-suppliers.view',
+                'asset-procurements.view',
+                'asset-receipts.view',
+                'asset-inspections.view',
+                'asset-calibrations.view',
+                'asset-reports.view',
+            ]),
         ]);
 
         User::where('username', 'admin')->first()?->assignRole('Admin');
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    private function permissionModels(Collection $permissionModels, array $names): array
+    {
+        return collect($names)
+            ->map(fn (string $name) => $permissionModels->get($name))
+            ->all();
     }
 }
